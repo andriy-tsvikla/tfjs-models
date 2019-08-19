@@ -18,7 +18,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import { describeWithFlags, NODE_ENVS } from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as mobilenet from './mobilenet';
 import * as posenetModel from './posenet_model';
@@ -63,16 +63,16 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
           return {
             inputResolution,
             heatmapScores:
-                tf.zeros([outputResolution, outputResolution, numKeypoints]),
+              tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(
-                [outputResolution, outputResolution, 2 * numKeypoints]),
+              [outputResolution, outputResolution, 2 * numKeypoints]),
             displacementFwd: tf.zeros(
-                [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
+              [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
             displacementBwd: tf.zeros(
-                [outputResolution, outputResolution, 2 * (numKeypoints - 1)])
+              [outputResolution, outputResolution, 2 * (numKeypoints - 1)])
           };
         },
-        dipose: () => {}
+        dipose: () => { }
       };
     });
 
@@ -83,72 +83,72 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
           return {
             inputResolution,
             heatmapScores:
-                tf.zeros([outputResolution, outputResolution, numKeypoints]),
+              tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(
-                [outputResolution, outputResolution, 2 * numKeypoints]),
+              [outputResolution, outputResolution, 2 * numKeypoints]),
             displacementFwd: tf.zeros(
-                [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
+              [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
             displacementBwd: tf.zeros(
-                [outputResolution, outputResolution, 2 * (numKeypoints - 1)])
+              [outputResolution, outputResolution, 2 * (numKeypoints - 1)])
           };
         },
-        dipose: () => {}
+        dipose: () => { }
       };
     });
 
-    posenetModel.load(resNetConfig)
-        .then((posenetInstance: posenetModel.PoseNet) => {
-          resNet = posenetInstance;
-        })
-        .then(() => posenetModel.load(mobileNetConfig))
-        .then((posenetInstance: posenetModel.PoseNet) => {
-          mobileNet = posenetInstance;
-        })
-        .then(done)
-        .catch(done.fail);
+    posenetModel.load(resNetConfig, {})
+      .then((posenetInstance: posenetModel.PoseNet) => {
+        resNet = posenetInstance;
+      })
+      .then(() => posenetModel.load(mobileNetConfig, {}))
+      .then((posenetInstance: posenetModel.PoseNet) => {
+        mobileNet = posenetInstance;
+      })
+      .then(done)
+      .catch(done.fail);
   });
 
   it('estimateSinglePose does not leak memory', done => {
     const input =
-        tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
+      tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
 
-    resNet.estimateSinglePose(input, {flipHorizontal: false})
-        .then(() => {
-          return mobileNet.estimateSinglePose(input, {flipHorizontal: false});
-        })
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    resNet.estimateSinglePose(input, { flipHorizontal: false })
+      .then(() => {
+        return mobileNet.estimateSinglePose(input, { flipHorizontal: false });
+      })
+      .then(() => {
+        expect(tf.memory().numTensors).toEqual(beforeTensors);
+      })
+      .then(done)
+      .catch(done.fail);
   });
 
   it('estimateMultiplePoses does not leak memory', done => {
     const input =
-        tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
+      tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
     resNet
-        .estimateMultiplePoses(input, {
+      .estimateMultiplePoses(input, {
+        flipHorizontal: false,
+        maxDetections: 5,
+        scoreThreshold: 0.5,
+        nmsRadius: 20
+      })
+      .then(() => {
+        return mobileNet.estimateMultiplePoses(input, {
           flipHorizontal: false,
           maxDetections: 5,
           scoreThreshold: 0.5,
           nmsRadius: 20
-        })
-        .then(() => {
-          return mobileNet.estimateMultiplePoses(input, {
-            flipHorizontal: false,
-            maxDetections: 5,
-            scoreThreshold: 0.5,
-            nmsRadius: 20
-          });
-        })
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+        });
+      })
+      .then(() => {
+        expect(tf.memory().numTensors).toEqual(beforeTensors);
+      })
+      .then(done)
+      .catch(done.fail);
   });
 });

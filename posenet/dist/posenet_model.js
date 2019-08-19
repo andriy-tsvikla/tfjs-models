@@ -229,7 +229,6 @@ var PoseNet = (function () {
 }());
 exports.PoseNet = PoseNet;
 function loadMobileNet(config, loadOpions) {
-    if (loadOpions === void 0) { loadOpions = {}; }
     return __awaiter(this, void 0, void 0, function () {
         var outputStride, quantBytes, multiplier, url, graphModel, mobilenet;
         return __generator(this, function (_a) {
@@ -253,7 +252,6 @@ function loadMobileNet(config, loadOpions) {
     });
 }
 function loadResNet(config, loadOpions) {
-    if (loadOpions === void 0) { loadOpions = {}; }
     return __awaiter(this, void 0, void 0, function () {
         var outputStride, quantBytes, url, graphModel, resnet;
         return __generator(this, function (_a) {
@@ -277,7 +275,6 @@ function loadResNet(config, loadOpions) {
 }
 function load(config, loadOptions) {
     if (config === void 0) { config = MOBILENET_V1_CONFIG; }
-    if (loadOptions === void 0) { loadOptions = {}; }
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             config = validateModelConfig(config);

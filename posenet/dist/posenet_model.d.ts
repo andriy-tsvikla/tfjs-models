@@ -50,4 +50,4 @@ export declare class PoseNet {
     estimatePoses(input: PosenetInput, config: LegacySinglePersonInferenceConfig | LegacyMultiPersonInferenceConfig): Promise<Pose[]>;
     dispose(): void;
 }
-export declare function load(config?: ModelConfig, loadOptions?: LoadOptions): Promise<PoseNet>;
+export declare function load(config: ModelConfig, loadOptions: LoadOptions): Promise<PoseNet>;

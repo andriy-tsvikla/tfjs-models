@@ -62,11 +62,11 @@ jasmine_util_1.describeWithFlags('PoseNet', jasmine_util_1.NODE_ENVS, function (
                 dipose: function () { }
             };
         });
-        posenetModel.load(resNetConfig)
+        posenetModel.load(resNetConfig, {})
             .then(function (posenetInstance) {
             resNet = posenetInstance;
         })
-            .then(function () { return posenetModel.load(mobileNetConfig); })
+            .then(function () { return posenetModel.load(mobileNetConfig, {}); })
             .then(function (posenetInstance) {
             mobileNet = posenetInstance;
         })

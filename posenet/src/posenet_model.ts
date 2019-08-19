@@ -428,7 +428,7 @@ export class PoseNet {
   }
 }
 
-async function loadMobileNet(config: ModelConfig, loadOpions: LoadOptions = {}): Promise<PoseNet> {
+async function loadMobileNet(config: ModelConfig, loadOpions: LoadOptions): Promise<PoseNet> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   const multiplier = config.multiplier;
@@ -445,7 +445,7 @@ async function loadMobileNet(config: ModelConfig, loadOpions: LoadOptions = {}):
   return new PoseNet(mobilenet, config.inputResolution);
 }
 
-async function loadResNet(config: ModelConfig, loadOpions: LoadOptions = {}): Promise<PoseNet> {
+async function loadResNet(config: ModelConfig, loadOpions: LoadOptions): Promise<PoseNet> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   if (tf == null) {
@@ -473,7 +473,7 @@ async function loadResNet(config: ModelConfig, loadOpions: LoadOptions = {}): Pr
  * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
  * for defining your customized config.
  */
-export async function load(config: ModelConfig = MOBILENET_V1_CONFIG, loadOptions: LoadOptions = {}):
+export async function load(config: ModelConfig = MOBILENET_V1_CONFIG, loadOptions: LoadOptions):
   Promise<PoseNet> {
   config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
