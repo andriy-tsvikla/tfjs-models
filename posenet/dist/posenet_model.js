@@ -228,7 +228,8 @@ var PoseNet = (function () {
     return PoseNet;
 }());
 exports.PoseNet = PoseNet;
-function loadMobileNet(config) {
+function loadMobileNet(config, loadOpions) {
+    if (loadOpions === void 0) { loadOpions = {}; }
     return __awaiter(this, void 0, void 0, function () {
         var outputStride, quantBytes, multiplier, url, graphModel, mobilenet;
         return __generator(this, function (_a) {
@@ -242,7 +243,7 @@ function loadMobileNet(config) {
                             "also include @tensorflow/tfjs on the page before using this\n        model.");
                     }
                     url = checkpoints_1.mobileNetCheckpoint(outputStride, multiplier, quantBytes);
-                    return [4, tfconv.loadGraphModel(config.modelUrl || url)];
+                    return [4, tfconv.loadGraphModel(config.modelUrl || url, loadOpions)];
                 case 1:
                     graphModel = _a.sent();
                     mobilenet = new mobilenet_1.MobileNet(graphModel, outputStride);
@@ -251,7 +252,8 @@ function loadMobileNet(config) {
         });
     });
 }
-function loadResNet(config) {
+function loadResNet(config, loadOpions) {
+    if (loadOpions === void 0) { loadOpions = {}; }
     return __awaiter(this, void 0, void 0, function () {
         var outputStride, quantBytes, url, graphModel, resnet;
         return __generator(this, function (_a) {
@@ -264,7 +266,7 @@ function loadResNet(config) {
                             "also include @tensorflow/tfjs on the page before using this\n        model.");
                     }
                     url = checkpoints_1.resNet50Checkpoint(outputStride, quantBytes);
-                    return [4, tfconv.loadGraphModel(config.modelUrl || url)];
+                    return [4, tfconv.loadGraphModel(config.modelUrl || url, loadOpions)];
                 case 1:
                     graphModel = _a.sent();
                     resnet = new resnet_1.ResNet(graphModel, outputStride);
@@ -273,16 +275,17 @@ function loadResNet(config) {
         });
     });
 }
-function load(config) {
+function load(config, loadOptions) {
     if (config === void 0) { config = MOBILENET_V1_CONFIG; }
+    if (loadOptions === void 0) { loadOptions = {}; }
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             config = validateModelConfig(config);
             if (config.architecture === 'ResNet50') {
-                return [2, loadResNet(config)];
+                return [2, loadResNet(config, loadOptions)];
             }
             else if (config.architecture === 'MobileNetV1') {
-                return [2, loadMobileNet(config)];
+                return [2, loadMobileNet(config, loadOptions)];
             }
             else {
                 return [2, null];

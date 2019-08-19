@@ -18,20 +18,21 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier} from './mobilenet';
-import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
-import {ResNet} from './resnet';
-import {decodeSinglePose} from './single_pose/decode_single_pose';
-import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D} from './util';
+import { mobileNetCheckpoint, resNet50Checkpoint } from './checkpoints';
+import { assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier } from './mobilenet';
+import { decodeMultiplePoses } from './multi_pose/decode_multiple_poses';
+import { ResNet } from './resnet';
+import { decodeSinglePose } from './single_pose/decode_single_pose';
+import { Pose, PosenetInput } from './types';
+import { getInputTensorDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D } from './util';
+import { LoadOptions } from '@tensorflow/tfjs-core/dist/io/io';
 
 export type PoseNetInputResolution =
-    161|193|257|289|321|353|385|417|449|481|513|801|1217;
-export type PoseNetOutputStride = 32|16|8;
-export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
-export type PoseNetDecodingMethod = 'single-person'|'multi-person';
-export type PoseNetQuantBytes = 1|2|4;
+  161 | 193 | 257 | 289 | 321 | 353 | 385 | 417 | 449 | 481 | 513 | 801 | 1217;
+export type PoseNetOutputStride = 32 | 16 | 8;
+export type PoseNetArchitecture = 'ResNet50' | 'MobileNetV1';
+export type PoseNetDecodingMethod = 'single-person' | 'multi-person';
+export type PoseNetQuantBytes = 1 | 2 | 4;
 
 /**
  * PoseNet supports using various convolution neural network models
@@ -59,7 +60,7 @@ export interface BaseModel {
    * displacementFwd: A Tensor3D that represents the forward displacement.
    * displacementBwd: A Tensor3D that represents the backward displacement.
    */
-  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
+  predict(input: tf.Tensor3D): { [key: string]: tf.Tensor3D };
   /**
    * Releases the CPU and GPU memory allocated by the model.
    */
@@ -129,7 +130,7 @@ const VALID_STRIDE = {
   'ResNet50': [32, 16]
 };
 export const VALID_INPUT_RESOLUTION =
-    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
+  [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
 const VALID_MULTIPLIER = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
@@ -144,8 +145,8 @@ function validateModelConfig(config: ModelConfig) {
   }
   if (VALID_ARCHITECTURE.indexOf(config.architecture) < 0) {
     throw new Error(
-        `Invalid architecture ${config.architecture}. ` +
-        `Should be one of ${VALID_ARCHITECTURE}`);
+      `Invalid architecture ${config.architecture}. ` +
+      `Should be one of ${VALID_ARCHITECTURE}`);
   }
 
   if (config.inputResolution == null) {
@@ -154,8 +155,8 @@ function validateModelConfig(config: ModelConfig) {
 
   if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
     throw new Error(
-        `Invalid inputResolution ${config.inputResolution}. ` +
-        `Should be one of ${VALID_INPUT_RESOLUTION}`);
+      `Invalid inputResolution ${config.inputResolution}. ` +
+      `Should be one of ${VALID_INPUT_RESOLUTION}`);
   }
 
   if (config.outputStride == null) {
@@ -163,9 +164,9 @@ function validateModelConfig(config: ModelConfig) {
   }
   if (VALID_STRIDE[config.architecture].indexOf(config.outputStride) < 0) {
     throw new Error(
-        `Invalid outputStride ${config.outputStride}. ` +
-        `Should be one of ${VALID_STRIDE[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+      `Invalid outputStride ${config.outputStride}. ` +
+      `Should be one of ${VALID_STRIDE[config.architecture]} ` +
+      `for architecutre ${config.architecture}.`);
   }
 
   if (config.multiplier == null) {
@@ -173,9 +174,9 @@ function validateModelConfig(config: ModelConfig) {
   }
   if (VALID_MULTIPLIER[config.architecture].indexOf(config.multiplier) < 0) {
     throw new Error(
-        `Invalid multiplier ${config.multiplier}. ` +
-        `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+      `Invalid multiplier ${config.multiplier}. ` +
+      `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
+      `for architecutre ${config.architecture}.`);
   }
 
   if (config.quantBytes == null) {
@@ -183,9 +184,9 @@ function validateModelConfig(config: ModelConfig) {
   }
   if (VALID_QUANT_BYTES.indexOf(config.quantBytes) < 0) {
     throw new Error(
-        `Invalid quantBytes ${config.quantBytes}. ` +
-        `Should be one of ${VALID_QUANT_BYTES} ` +
-        `for architecutre ${config.architecture}.`);
+      `Invalid quantBytes ${config.quantBytes}. ` +
+      `Should be one of ${VALID_QUANT_BYTES} ` +
+      `for architecutre ${config.architecture}.`);
   }
 
   return config;
@@ -212,7 +213,7 @@ export interface InferenceConfig {
 /**
  * Single Person Inference Config
  */
-export interface SinglePersonInterfaceConfig extends InferenceConfig {}
+export interface SinglePersonInterfaceConfig extends InferenceConfig { }
 
 /**
  * Multiple Person Inference Config
@@ -234,12 +235,12 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
 
 // these added back to not break the existing api.
 export interface LegacyMultiPersonInferenceConfig extends
-    MultiPersonInferenceConfig {
+  MultiPersonInferenceConfig {
   decodingMethod: 'multi-person'
 }
 
 export interface LegacySinglePersonInferenceConfig extends
-    SinglePersonInterfaceConfig {
+  SinglePersonInterfaceConfig {
   decodingMethod: 'single-person'
 }
 
@@ -255,21 +256,21 @@ export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
 };
 
 function validateSinglePersonInferenceConfig(
-    config: SinglePersonInterfaceConfig) {}
+  config: SinglePersonInterfaceConfig) { }
 
 function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
-  const {maxDetections, scoreThreshold, nmsRadius} = config;
+  const { maxDetections, scoreThreshold, nmsRadius } = config;
 
   if (maxDetections <= 0) {
     throw new Error(
-        `Invalid maxDetections ${maxDetections}. ` +
-        `Should be > 0`);
+      `Invalid maxDetections ${maxDetections}. ` +
+      `Should be > 0`);
   }
 
   if (scoreThreshold < 0.0 || scoreThreshold > 1.0) {
     throw new Error(
-        `Invalid scoreThreshold ${scoreThreshold}. ` +
-        `Should be in range [0.0, 1.0]`);
+      `Invalid scoreThreshold ${scoreThreshold}. ` +
+      `Should be in range [0.0, 1.0]`);
   }
 
 
@@ -308,9 +309,9 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: PosenetInput,
-      config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
-      Promise<Pose[]> {
+    input: PosenetInput,
+    config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+    Promise<Pose[]> {
     const configWithDefaults: MultiPersonInferenceConfig = {
       ...MULTI_PERSON_INFERENCE_CONFIG,
       ...config
@@ -326,24 +327,24 @@ export class PoseNet {
 
     const [height, width] = getInputTensorDimensions(input);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const { resized, padding } =
+      padAndResizeTo(input, [inputResolution, inputResolution]);
 
-    const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-        this.baseModel.predict(resized);
+    const { heatmapScores, offsets, displacementFwd, displacementBwd } =
+      this.baseModel.predict(resized);
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
-        await toTensorBuffers3D(
-            [heatmapScores, offsets, displacementFwd, displacementBwd]);
+      await toTensorBuffers3D(
+        [heatmapScores, offsets, displacementFwd, displacementBwd]);
 
     const poses = await decodeMultiplePoses(
-        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, outputStride, configWithDefaults.maxDetections,
-        configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
+      scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
+      displacementsBwdBuffer, outputStride, configWithDefaults.maxDetections,
+      configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
-        configWithDefaults.flipHorizontal);
+      poses, [height, width], [inputResolution, inputResolution], padding,
+      configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -373,10 +374,10 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateSinglePose(
-      input: PosenetInput,
-      config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
-      Promise<Pose> {
-    const configWithDefaults = {...SINGLE_PERSON_INFERENCE_CONFIG, ...config};
+    input: PosenetInput,
+    config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+    Promise<Pose> {
+    const configWithDefaults = { ...SINGLE_PERSON_INFERENCE_CONFIG, ...config };
 
     validateSinglePersonInferenceConfig(configWithDefaults);
 
@@ -387,18 +388,18 @@ export class PoseNet {
 
     const [height, width] = getInputTensorDimensions(input);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const { resized, padding } =
+      padAndResizeTo(input, [inputResolution, inputResolution]);
 
-    const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-        this.baseModel.predict(resized);
+    const { heatmapScores, offsets, displacementFwd, displacementBwd } =
+      this.baseModel.predict(resized);
 
     const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
     const poses = [pose];
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
-        configWithDefaults.flipHorizontal);
+      poses, [height, width], [inputResolution, inputResolution], padding,
+      configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -411,8 +412,8 @@ export class PoseNet {
 
   /** Deprecated: Use either estimateSinglePose or estimateMultiplePoses */
   async estimatePoses(
-      input: PosenetInput,
-      config: LegacySinglePersonInferenceConfig|
+    input: PosenetInput,
+    config: LegacySinglePersonInferenceConfig |
       LegacyMultiPersonInferenceConfig): Promise<Pose[]> {
     if (config.decodingMethod == 'single-person') {
       const pose = await this.estimateSinglePose(input, config);
@@ -427,35 +428,35 @@ export class PoseNet {
   }
 }
 
-async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
+async function loadMobileNet(config: ModelConfig, loadOpions: LoadOptions = {}): Promise<PoseNet> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   const multiplier = config.multiplier;
   if (tf == null) {
     throw new Error(
-        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
-        `also include @tensorflow/tfjs on the page before using this
+      `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+      `also include @tensorflow/tfjs on the page before using this
         model.`);
   }
 
   const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
-  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url, loadOpions);
   const mobilenet = new MobileNet(graphModel, outputStride);
   return new PoseNet(mobilenet, config.inputResolution);
 }
 
-async function loadResNet(config: ModelConfig): Promise<PoseNet> {
+async function loadResNet(config: ModelConfig, loadOpions: LoadOptions = {}): Promise<PoseNet> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   if (tf == null) {
     throw new Error(
-        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
-        `also include @tensorflow/tfjs on the page before using this
+      `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+      `also include @tensorflow/tfjs on the page before using this
         model.`);
   }
 
   const url = resNet50Checkpoint(outputStride, quantBytes);
-  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url, loadOpions);
   const resnet = new ResNet(graphModel, outputStride);
   return new PoseNet(resnet, config.inputResolution);
 }
@@ -472,13 +473,13 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
  * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
  * for defining your customized config.
  */
-export async function load(config: ModelConfig = MOBILENET_V1_CONFIG):
-    Promise<PoseNet> {
+export async function load(config: ModelConfig = MOBILENET_V1_CONFIG, loadOptions: LoadOptions = {}):
+  Promise<PoseNet> {
   config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
-    return loadResNet(config);
+    return loadResNet(config, loadOptions);
   } else if (config.architecture === 'MobileNetV1') {
-    return loadMobileNet(config);
+    return loadMobileNet(config, loadOptions);
   } else {
     return null;
   }

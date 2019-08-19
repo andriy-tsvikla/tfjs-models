@@ -1,6 +1,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import { MobileNetMultiplier } from './mobilenet';
 import { Pose, PosenetInput } from './types';
+import { LoadOptions } from '@tensorflow/tfjs-core/dist/io/io';
 export declare type PoseNetInputResolution = 161 | 193 | 257 | 289 | 321 | 353 | 385 | 417 | 449 | 481 | 513 | 801 | 1217;
 export declare type PoseNetOutputStride = 32 | 16 | 8;
 export declare type PoseNetArchitecture = 'ResNet50' | 'MobileNetV1';
@@ -49,4 +50,4 @@ export declare class PoseNet {
     estimatePoses(input: PosenetInput, config: LegacySinglePersonInferenceConfig | LegacyMultiPersonInferenceConfig): Promise<Pose[]>;
     dispose(): void;
 }
-export declare function load(config?: ModelConfig): Promise<PoseNet>;
+export declare function load(config?: ModelConfig, loadOptions?: LoadOptions): Promise<PoseNet>;
